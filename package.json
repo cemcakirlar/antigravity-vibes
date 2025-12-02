@@ -1,0 +1,16 @@
+{
+    "name": "antigravity-monorepo",
+    "version": "0.0.0",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "build": "pnpm -r run build",
+        "test": "pnpm -r run test",
+        "lint": "pnpm -r run lint",
+        "dev": "pnpm -r run dev"
+    },
+    "packageManager": "pnpm@10.24.0",
+    "engines": {
+        "node": ">=18"
+    }
+}
