@@ -1,31 +1,6 @@
 import { Player, Enemy, Bullet, Vector2, Particle, PowerUp, PowerUpType, EnemyType } from './Entities'
 import { AudioController } from './Audio'
-
-export enum GameState {
-    MENU = 'MENU',
-    PLAYING = 'PLAYING',
-    PAUSED = 'PAUSED',
-    GAMEOVER = 'GAMEOVER'
-}
-
-export interface GameOptions {
-    wallMode: 'DIE' | 'BOUNCE'
-    gameMode: 'NORMAL' | 'INFINITE' | 'SURVIVAL'
-    enemySpeed: 'SLOW' | 'NORMAL' | 'FAST'
-    movementMode: 'RECOIL' | 'WASD'
-    soundEnabled: boolean
-    autoFire: boolean
-    difficulty: 'EASY' | 'NORMAL' | 'HARD'
-    survivalThreshold: number
-}
-
-export interface CheatConfig {
-    enemySpawnRate: number
-    powerUpChance: number
-    enemySpeedMultiplier: number
-    godMode: boolean
-    survivalThresholdOverride: number | null
-}
+import { GameState, GameOptions, CheatConfig } from './types'
 
 export class GameEngine {
     private canvas: HTMLCanvasElement
@@ -78,11 +53,11 @@ export class GameEngine {
     private shakeTimer: number = 0
     private shakeIntensity: number = 0
 
-    private onStateChange: (state: GameState, score: number, level: number, dpm: number) => void
+    private onStateChange: (state: GameState, score: number, level: number, dpm: number, activePowerUps: PowerUpType[], totalEnemiesSpawned: number) => void
 
     constructor(
         canvas: HTMLCanvasElement,
-        onStateChange: (state: GameState, score: number, level: number, dpm: number) => void
+        onStateChange: (state: GameState, score: number, level: number, dpm: number, activePowerUps: PowerUpType[], totalEnemiesSpawned: number) => void
     ) {
         this.canvas = canvas
         this.onStateChange = onStateChange
@@ -105,7 +80,10 @@ export class GameEngine {
     }
 
     private notifyState() {
-        this.onStateChange(this.state, this.score, this.level, this.deathsPerMinute)
+        if (this.onStateChange) {
+            const activePowerUps = Array.from(this.player.powerups.keys())
+            this.onStateChange(this.state, this.score, this.level, this.deathsPerMinute, activePowerUps, this.totalEnemiesSpawned)
+        }
     }
 
     private resize = () => {
@@ -403,7 +381,8 @@ export class GameEngine {
             const b = this.bullets[i]
             for (let j = this.powerups.length - 1; j >= 0; j--) {
                 const p = this.powerups[j]
-                if (b.pos.sub(p.pos).mag() < b.radius + p.radius) {
+                // Increase collision radius for easier collection
+                if (b.pos.sub(p.pos).mag() < b.radius + p.radius + 10) {
                     this.collectPowerUp(p)
                     this.powerups.splice(j, 1)
                     this.bullets.splice(i, 1)
@@ -496,6 +475,7 @@ export class GameEngine {
 
         this.player.addPowerUp(p.type, duration)
         if (this.options.soundEnabled) this.audio.playHit()
+        this.spawnParticles(p.pos.x, p.pos.y, p.color, 10) // Visual feedback
         this.notifyState()
     }
 
