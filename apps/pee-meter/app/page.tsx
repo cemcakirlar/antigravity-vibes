@@ -9,6 +9,7 @@ import BottleSelector from '@/components/BottleSelector';
 import ImageUploader from '@/components/ImageUploader';
 import Options from '@/components/Options';
 import History from '@/components/History';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const MeasurementCanvas = dynamic(() => import('@/components/MeasurementCanvas'), {
   ssr: false,
@@ -18,6 +19,7 @@ const MeasurementCanvas = dynamic(() => import('@/components/MeasurementCanvas')
 type Step = 'upload' | 'measure' | 'result';
 
 export default function Home() {
+  const { t } = useLanguage();
   const [step, setStep] = useState<Step>('upload');
   const [selectedBottleId, setSelectedBottleId] = useState<string | null>(null);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
@@ -70,6 +72,16 @@ export default function Home() {
     setStep('result');
   };
 
+  // Helper to get bottle name translation
+  const getBottleName = (id: string) => {
+    switch (id) {
+      case 'pet-500': return t('bottles.pet500.name');
+      case 'pet-1500': return t('bottles.pet1500.name');
+      case 'hospital-urinal': return t('bottles.hospitalUrinal.name');
+      default: return BOTTLES.find(b => b.id === id)?.name || t('history.unknown');
+    }
+  };
+
   return (
     <div className="flex flex-col h-screen relative">
       {/* Header */}
@@ -83,13 +95,13 @@ export default function Home() {
               onClick={handleReset}
               className="text-sm bg-blue-700 px-3 py-1 rounded hover:bg-blue-800 transition"
             >
-              New
+              {t('home.new')}
             </button>
           )}
           <button
             onClick={() => setShowHistory(true)}
             className="p-1 rounded hover:bg-blue-700 transition"
-            title="History"
+            title={t('common.history')}
           >
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -98,7 +110,7 @@ export default function Home() {
           <button
             onClick={() => setShowOptions(true)}
             className="p-1 rounded hover:bg-blue-700 transition"
-            title="Settings"
+            title={t('common.settings')}
           >
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
               <path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z" />
@@ -129,15 +141,15 @@ export default function Home() {
         {step === 'upload' && (
           <div className="space-y-6 my-auto">
             <div className="text-center py-4">
-              <h2 className="text-2xl font-bold text-gray-800">Capture Photo</h2>
-              <p className="text-gray-500">Take a clear photo of the bottle upright</p>
+              <h2 className="text-2xl font-bold text-gray-800">{t('home.captureTitle')}</h2>
+              <p className="text-gray-500">{t('home.captureDesc')}</p>
             </div>
             <ImageUploader
               onImageSelect={handleImageSelect}
               onSmartCameraClick={() => setShowSmartCamera(true)}
             />
             <div className="bg-blue-50 p-4 rounded-lg text-sm text-blue-800">
-              <strong>Tip:</strong> Ensure the liquid level and the bottle's shoulder are clearly visible.
+              {t('home.tip')}
             </div>
           </div>
         )}
@@ -149,7 +161,7 @@ export default function Home() {
             <div className="flex-1 min-h-0 relative flex flex-col">
               <div className="flex items-center justify-between p-2 shrink-0 landscape:hidden">
                 <div className="flex items-center gap-2 text-gray-500 cursor-pointer" onClick={() => setStep('upload')}>
-                  <span>← Retake</span>
+                  <span>← {t('home.retake')}</span>
                 </div>
               </div>
 
@@ -165,7 +177,7 @@ export default function Home() {
                   onClick={() => setStep('upload')}
                   className="hidden landscape:flex absolute top-4 left-4 bg-black/50 text-white px-3 py-1 rounded-full text-sm hover:bg-black/70 transition backdrop-blur-sm z-50"
                 >
-                  ← Retake
+                  ← {t('home.retake')}
                 </button>
               </div>
             </div>
@@ -174,7 +186,7 @@ export default function Home() {
             <div className="shrink-0 p-3 bg-white border-t landscape:border-t-0 landscape:border-l border-gray-100 landscape:w-80 landscape:flex landscape:flex-col landscape:justify-center overflow-y-auto">
               {/* Compact Bottle Selector */}
               <div className="mb-4">
-                <p className="text-xs font-bold text-gray-500 uppercase mb-2 hidden landscape:block">Container Type</p>
+                <p className="text-xs font-bold text-gray-500 uppercase mb-2 hidden landscape:block">{t('home.containerType')}</p>
                 <BottleSelector
                   selectedId={selectedBottleId}
                   onSelect={setSelectedBottleId}
@@ -184,16 +196,16 @@ export default function Home() {
 
               <div className="bg-white p-4 rounded-xl shadow-lg border border-gray-100">
                 <div className="flex items-center justify-between mb-4 landscape:flex-col landscape:items-start landscape:gap-2">
-                  <span className="text-gray-500 uppercase text-xs font-bold tracking-wider">Estimated Volume</span>
+                  <span className="text-gray-500 uppercase text-xs font-bold tracking-wider">{t('home.estimatedVolume')}</span>
                   <div className="text-3xl font-bold text-blue-600 font-mono">
-                    {volume}<span className="text-xl text-gray-400">/{selectedBottle.capacityMl}</span><span className="text-lg text-gray-400 ml-1">ml</span>
+                    {volume}<span className="text-xl text-gray-400">/{selectedBottle.capacityMl}</span><span className="text-lg text-gray-400 ml-1">{t('common.ml')}</span>
                   </div>
                 </div>
                 <button
                   onClick={handleConfirm}
                   className="w-full bg-blue-600 text-white py-3 rounded-xl font-bold text-lg shadow-lg hover:bg-blue-700 active:scale-95 transition-all"
                 >
-                  Confirm
+                  {t('home.confirm')}
                 </button>
               </div>
             </div>
@@ -209,17 +221,17 @@ export default function Home() {
             </div>
 
             <div>
-              <h2 className="text-3xl font-bold text-gray-900 mb-2">Measurement Complete</h2>
-              <p className="text-gray-500">Recorded volume for patient chart</p>
+              <h2 className="text-3xl font-bold text-gray-900 mb-2">{t('home.completeTitle')}</h2>
+              <p className="text-gray-500">{t('home.completeDesc')}</p>
             </div>
 
             <div className="bg-gray-50 p-8 rounded-2xl w-full max-w-xs border border-gray-200">
               <div className="text-6xl font-bold text-gray-900 font-mono mb-2">
                 {volume}
               </div>
-              <div className="text-xl text-gray-500 font-medium">milliliters</div>
+              <div className="text-xl text-gray-500 font-medium">{t('home.milliliters')}</div>
               <div className="mt-2 text-sm text-gray-400">
-                Container: {selectedBottle.name}
+                {t('history.container')}: {getBottleName(selectedBottle.id)}
               </div>
             </div>
 
@@ -227,7 +239,7 @@ export default function Home() {
               onClick={handleReset}
               className="px-8 py-3 bg-gray-900 text-white rounded-full font-semibold hover:bg-gray-800 transition-colors"
             >
-              Start New Measurement
+              {t('home.startNew')}
             </button>
           </div>
         )}

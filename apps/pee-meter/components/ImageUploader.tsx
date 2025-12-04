@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useState, useEffect } from 'react';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface ImageUploaderProps {
     onImageSelect: (imageUrl: string) => void;
@@ -10,6 +11,7 @@ interface ImageUploaderProps {
 type CameraStatus = 'loading' | 'ready' | 'insecure' | 'unsupported';
 
 export default function ImageUploader({ onImageSelect, onSmartCameraClick }: ImageUploaderProps) {
+    const { t } = useLanguage();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [cameraStatus, setCameraStatus] = useState<CameraStatus>('loading');
     const [statusMessage, setStatusMessage] = useState<string>('');
@@ -19,16 +21,16 @@ export default function ImageUploader({ onImageSelect, onSmartCameraClick }: Ima
         if (typeof window !== 'undefined') {
             if (!window.isSecureContext) {
                 setCameraStatus('insecure');
-                setStatusMessage('Requires HTTPS connection');
+                setStatusMessage(t('home.httpsRequired'));
             } else if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
                 setCameraStatus('unsupported');
-                setStatusMessage('Camera API not supported');
+                setStatusMessage(t('home.apiNotSupported'));
             } else {
                 setCameraStatus('ready');
-                setStatusMessage('Auto-level & guidance');
+                setStatusMessage(t('home.autoLevel'));
             }
         }
-    }, []);
+    }, [t]);
 
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
@@ -66,7 +68,7 @@ export default function ImageUploader({ onImageSelect, onSmartCameraClick }: Ima
                 </div>
                 <div className="text-center z-10">
                     <span className="block text-xl font-bold">
-                        {cameraStatus === 'loading' ? 'Checking Camera...' : 'Smart Camera'}
+                        {cameraStatus === 'loading' ? t('home.checkingCamera') : t('home.smartCamera')}
                     </span>
                     <span className={`text-sm ${isSmartCameraDisabled ? 'text-red-100 font-medium' : 'text-blue-100'}`}>
                         {statusMessage}
@@ -92,7 +94,7 @@ export default function ImageUploader({ onImageSelect, onSmartCameraClick }: Ima
                     ref={fileInputRef}
                     onChange={handleFileChange}
                 />
-                <span className="text-sm font-medium">Upload from Gallery / Camera App</span>
+                <span className="text-sm font-medium">{t('home.uploadGallery')}</span>
             </div>
         </div>
     );

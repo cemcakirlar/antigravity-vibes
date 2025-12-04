@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { BottleType } from '@/lib/constants';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface MeasurementCanvasProps {
     imageUrl: string;
@@ -10,6 +11,7 @@ interface MeasurementCanvasProps {
 }
 
 export default function MeasurementCanvas({ imageUrl, bottle, onVolumeChange }: MeasurementCanvasProps) {
+    const { t } = useLanguage();
     const containerRef = useRef<HTMLDivElement>(null);
     const [processedImage, setProcessedImage] = useState<string | null>(null);
     const [activeFilter, setActiveFilter] = useState<'none' | 'enhance' | 'edge'>('none');
@@ -433,7 +435,7 @@ export default function MeasurementCanvas({ imageUrl, bottle, onVolumeChange }: 
                 className="absolute border-2 border-green-500 bg-green-500/10 z-10 pointer-events-none animate-in fade-in duration-500"
                 style={style}
             >
-                <span className="absolute -top-6 left-0 bg-green-500 text-white text-xs px-1 rounded">Bottle</span>
+                <span className="absolute -top-6 left-0 bg-green-500 text-white text-xs px-1 rounded">{t('measurement.bottle')}</span>
             </div>
         );
     };
@@ -467,7 +469,7 @@ export default function MeasurementCanvas({ imageUrl, bottle, onVolumeChange }: 
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
                     </svg>
-                    No bottle detected
+                    {t('measurement.noBottleDetected')}
                 </div>
             )}
 
@@ -476,21 +478,21 @@ export default function MeasurementCanvas({ imageUrl, bottle, onVolumeChange }: 
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    Bottle Detected
+                    {t('measurement.bottleDetected')}
                 </div>
             )}
 
             {detectionStatus === 'loading' && (
                 <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-black/50 text-white px-3 py-1 rounded-full text-xs backdrop-blur-sm z-50 flex items-center gap-2">
                     <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></div>
-                    Loading AI...
+                    {t('measurement.loadingAI')}
                 </div>
             )}
 
             {detectionStatus === 'detecting' && (
                 <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-black/50 text-white px-3 py-1 rounded-full text-xs backdrop-blur-sm z-50 flex items-center gap-2">
                     <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
-                    Scanning...
+                    {t('measurement.scanning')}
                 </div>
             )}
 
@@ -499,7 +501,7 @@ export default function MeasurementCanvas({ imageUrl, bottle, onVolumeChange }: 
                 <button
                     onClick={runDetection}
                     className="p-2 rounded-full backdrop-blur-md bg-black/50 text-white hover:bg-black/70 transition-all"
-                    title="Rescan AI"
+                    title={t('measurement.rescan')}
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
@@ -509,7 +511,7 @@ export default function MeasurementCanvas({ imageUrl, bottle, onVolumeChange }: 
                 <button
                     onClick={() => setActiveFilter('none')}
                     className={`p-2 rounded-full backdrop-blur-md transition-all ${activeFilter === 'none' ? 'bg-white text-black' : 'bg-black/50 text-white hover:bg-black/70'}`}
-                    title="Original"
+                    title={t('measurement.original')}
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
@@ -518,7 +520,7 @@ export default function MeasurementCanvas({ imageUrl, bottle, onVolumeChange }: 
                 <button
                     onClick={() => setActiveFilter('enhance')}
                     className={`p-2 rounded-full backdrop-blur-md transition-all ${activeFilter === 'enhance' ? 'bg-blue-500 text-white' : 'bg-black/50 text-white hover:bg-black/70'}`}
-                    title="Auto Contrast"
+                    title={t('measurement.autoContrast')}
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.263l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
@@ -527,7 +529,7 @@ export default function MeasurementCanvas({ imageUrl, bottle, onVolumeChange }: 
                 <button
                     onClick={() => setActiveFilter('edge')}
                     className={`p-2 rounded-full backdrop-blur-md transition-all ${activeFilter === 'edge' ? 'bg-green-500 text-white' : 'bg-black/50 text-white hover:bg-black/70'}`}
-                    title="Edge Detection"
+                    title={t('measurement.edgeDetection')}
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
@@ -544,7 +546,7 @@ export default function MeasurementCanvas({ imageUrl, bottle, onVolumeChange }: 
             >
                 <div className="w-full border-t-2 border-dashed border-red-500 shadow-sm group-hover:border-red-400"></div>
                 <span className="absolute right-2 -top-6 text-xs font-bold text-red-500 bg-black/50 px-1 rounded">
-                    MAX ({bottle.capacityMl}ml)
+                    {t('measurement.max')} ({bottle.capacityMl}{t('common.ml')})
                 </span>
             </div>
 
@@ -556,7 +558,7 @@ export default function MeasurementCanvas({ imageUrl, bottle, onVolumeChange }: 
             >
                 <div className="w-full border-t-4 border-yellow-400 shadow-md group-hover:border-yellow-300"></div>
                 <div className="absolute left-1/2 -translate-x-1/2 -top-8 bg-yellow-400 text-black font-bold px-2 py-1 rounded-full text-sm shadow-lg">
-                    LIQUID LEVEL
+                    {t('measurement.liquidLevel')}
                 </div>
             </div>
 
@@ -568,7 +570,7 @@ export default function MeasurementCanvas({ imageUrl, bottle, onVolumeChange }: 
             >
                 <div className="w-full border-t-2 border-dashed border-blue-500 shadow-sm group-hover:border-blue-400"></div>
                 <span className="absolute right-2 top-2 text-xs font-bold text-blue-500 bg-black/50 px-1 rounded">
-                    BASE (0ml)
+                    {t('measurement.base')} (0{t('common.ml')})
                 </span>
             </div>
 

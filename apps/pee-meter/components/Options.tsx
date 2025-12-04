@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { BOTTLES } from '@/lib/constants';
 import { getRetentionPeriod, setRetentionPeriod, RetentionPeriod } from '@/lib/storage';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface OptionsProps {
     onClose: () => void;
@@ -10,6 +11,7 @@ interface OptionsProps {
 }
 
 export default function Options({ onClose, onUpdate }: OptionsProps) {
+    const { t, language, setLanguage } = useLanguage();
     const [defaultBottleId, setDefaultBottleId] = useState<string>('');
     const [retention, setRetention] = useState<RetentionPeriod>('forever');
     const [strictLeveling, setStrictLeveling] = useState(false);
@@ -54,7 +56,7 @@ export default function Options({ onClose, onUpdate }: OptionsProps) {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
             <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200 max-h-[90vh] overflow-y-auto">
                 <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50 sticky top-0 z-10">
-                    <h2 className="text-lg font-bold text-gray-900">Settings</h2>
+                    <h2 className="text-lg font-bold text-gray-900">{t('options.title')}</h2>
                     <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -63,14 +65,38 @@ export default function Options({ onClose, onUpdate }: OptionsProps) {
                 </div>
 
                 <div className="p-6 space-y-8">
+                    {/* Language Section */}
+                    <div>
+                        <label className="block text-sm font-bold text-gray-900 mb-2">
+                            {t('options.language')}
+                        </label>
+                        <div className="grid grid-cols-2 gap-2">
+                            <button
+                                onClick={() => setLanguage('en')}
+                                className={`flex items-center justify-center p-2 border rounded-lg text-sm font-medium transition-colors ${language === 'en'
+                                    ? 'border-blue-500 bg-blue-600 text-white'
+                                    : 'border-gray-200 hover:bg-gray-50 text-gray-700'
+                                    }`}
+                            >
+                                English
+                            </button>
+                            <button
+                                onClick={() => setLanguage('tr')}
+                                className={`flex items-center justify-center p-2 border rounded-lg text-sm font-medium transition-colors ${language === 'tr'
+                                    ? 'border-blue-500 bg-blue-600 text-white'
+                                    : 'border-gray-200 hover:bg-gray-50 text-gray-700'
+                                    }`}
+                            >
+                                Türkçe
+                            </button>
+                        </div>
+                    </div>
+
                     {/* Default Bottle Section */}
                     <div>
                         <label className="block text-sm font-bold text-gray-900 mb-2">
-                            Default Container
+                            {t('options.defaultBottle')}
                         </label>
-                        <p className="text-xs text-gray-500 mb-3">
-                            Pre-selected container for new measurements.
-                        </p>
                         <div className="space-y-2">
                             {BOTTLES.map((bottle) => (
                                 <label
@@ -97,16 +123,13 @@ export default function Options({ onClose, onUpdate }: OptionsProps) {
                     {/* Retention Section */}
                     <div>
                         <label className="block text-sm font-bold text-gray-900 mb-2">
-                            History Retention
+                            {t('options.historyRetention')}
                         </label>
-                        <p className="text-xs text-gray-500 mb-3">
-                            Automatically delete old measurements.
-                        </p>
                         <div className="grid grid-cols-2 gap-2">
                             {[
-                                { val: 'forever', label: 'Keep Forever' },
-                                { val: '24h', label: '24 Hours' },
-                                { val: '7d', label: '7 Days' },
+                                { val: 'forever', label: t('options.keepForever') },
+                                { val: '24h', label: t('options.hours24') },
+                                { val: '7d', label: t('options.days7') },
                                 { val: '30d', label: '30 Days' },
                             ].map((opt) => (
                                 <label
@@ -151,14 +174,13 @@ export default function Options({ onClose, onUpdate }: OptionsProps) {
 
                     {/* AI Settings Section */}
                     <div className="pt-4 border-t border-gray-100">
-                        <h3 className="text-sm font-bold text-gray-900 mb-3">AI Settings</h3>
+                        <h3 className="text-sm font-bold text-gray-900 mb-3">{t('options.aiSettings')}</h3>
 
                         {/* Auto-Position Lines */}
                         <div className="mb-4">
                             <label className="flex items-center justify-between cursor-pointer">
                                 <div>
-                                    <span className="block text-sm font-medium text-gray-900">Auto-Position Lines</span>
-                                    <span className="text-xs text-gray-500">Set lines based on detection</span>
+                                    <span className="block text-sm font-medium text-gray-900">{t('options.autoPosition')}</span>
                                 </div>
                                 <div className="relative">
                                     <input
@@ -175,7 +197,7 @@ export default function Options({ onClose, onUpdate }: OptionsProps) {
                         {/* Confidence Threshold */}
                         <div>
                             <div className="flex justify-between mb-1">
-                                <label className="text-sm font-medium text-gray-900">Confidence Threshold</label>
+                                <label className="text-sm font-medium text-gray-900">{t('options.threshold')}</label>
                                 <span className="text-xs font-mono text-gray-500">{Math.round(aiThreshold * 100)}%</span>
                             </div>
                             <input
@@ -187,9 +209,6 @@ export default function Options({ onClose, onUpdate }: OptionsProps) {
                                 onChange={(e) => setAiThreshold(parseFloat(e.target.value))}
                                 className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
                             />
-                            <p className="text-xs text-gray-500 mt-1">
-                                Lower values detect more objects but may be less accurate.
-                            </p>
                         </div>
                     </div>
                 </div>
@@ -199,7 +218,7 @@ export default function Options({ onClose, onUpdate }: OptionsProps) {
                         onClick={handleSave}
                         className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
                     >
-                        Save Changes
+                        {t('common.save')}
                     </button>
                 </div>
             </div>

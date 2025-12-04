@@ -22,6 +22,8 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
+import { LanguageProvider } from "@/contexts/LanguageContext";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -30,10 +32,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="antialiased bg-gray-50 text-gray-900 min-h-screen">
-        <ServiceWorkerRegister />
-        <main className="w-full h-screen bg-white shadow-xl overflow-hidden">
-          {children}
-        </main>
+        <LanguageProvider>
+          <ServiceWorkerRegister />
+          <main className="w-full h-screen bg-white shadow-xl overflow-hidden">
+            {children}
+          </main>
+        </LanguageProvider>
       </body>
     </html>
   );

@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useState, useEffect, useCallback } from 'react';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface SmartCameraProps {
     onCapture: (imageUrl: string) => void;
@@ -8,6 +9,7 @@ interface SmartCameraProps {
 }
 
 export default function SmartCamera({ onCapture, onCancel }: SmartCameraProps) {
+    const { t } = useLanguage();
     const videoRef = useRef<HTMLVideoElement>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [stream, setStream] = useState<MediaStream | null>(null);
@@ -29,7 +31,7 @@ export default function SmartCamera({ onCapture, onCancel }: SmartCameraProps) {
     const startCamera = async () => {
         setError(null);
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-            setError("Camera API not supported. Please use HTTPS or a modern browser.");
+            setError(t('camera.apiNotSupported'));
             return;
         }
 
@@ -45,9 +47,9 @@ export default function SmartCamera({ onCapture, onCancel }: SmartCameraProps) {
         } catch (err: any) {
             console.error("Error accessing camera:", err);
             if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-                setError("Camera permission denied. Please allow camera access in your browser settings.");
+                setError(t('camera.accessDenied'));
             } else {
-                setError("Could not access camera. Ensure you are on HTTPS.");
+                setError(t('camera.accessError'));
             }
         }
     };
@@ -155,7 +157,7 @@ export default function SmartCamera({ onCapture, onCancel }: SmartCameraProps) {
                             onClick={startCamera}
                             className="bg-white text-black px-6 py-2 rounded-full font-bold hover:bg-gray-200 transition"
                         >
-                            Retry Camera
+                            {t('camera.retry')}
                         </button>
                     </div>
                 ) : (
@@ -195,18 +197,18 @@ export default function SmartCamera({ onCapture, onCancel }: SmartCameraProps) {
 
                                 {/* Status Text */}
                                 <div className="absolute top-20 bg-black/50 text-white px-4 py-2 rounded-full backdrop-blur-md font-mono text-sm">
-                                    {isLevel ? 'PERFECT LEVEL' : 'TILT TO CENTER'}
+                                    {isLevel ? t('camera.perfectLevel') : t('camera.tiltToCenter')}
                                 </div>
                             </div>
                         ) : (
                             <div className="absolute inset-0 flex items-center justify-center bg-black/80 z-10">
                                 <div className="text-center p-6">
-                                    <p className="text-white mb-4">Enable sensors for smart leveling</p>
+                                    <p className="text-white mb-4">{t('camera.enableSensors')}</p>
                                     <button
                                         onClick={requestAccess}
                                         className="bg-blue-600 text-white px-6 py-3 rounded-full font-bold"
                                     >
-                                        Enable Sensors
+                                        {t('camera.enableBtn')}
                                     </button>
                                 </div>
                             </div>
@@ -221,7 +223,7 @@ export default function SmartCamera({ onCapture, onCancel }: SmartCameraProps) {
                     onClick={onCancel}
                     className="text-white p-4"
                 >
-                    Cancel
+                    {t('common.cancel')}
                 </button>
 
                 <button
