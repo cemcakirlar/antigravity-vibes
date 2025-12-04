@@ -13,6 +13,8 @@ export default function Options({ onClose, onUpdate }: OptionsProps) {
     const [defaultBottleId, setDefaultBottleId] = useState<string>('');
     const [retention, setRetention] = useState<RetentionPeriod>('forever');
     const [strictLeveling, setStrictLeveling] = useState(false);
+    const [aiAutoPosition, setAiAutoPosition] = useState(true);
+    const [aiThreshold, setAiThreshold] = useState(0.3);
 
     useEffect(() => {
         const stored = localStorage.getItem('defaultBottleId');
@@ -23,6 +25,15 @@ export default function Options({ onClose, onUpdate }: OptionsProps) {
 
         const storedStrict = localStorage.getItem('strictLeveling');
         setStrictLeveling(storedStrict === 'true');
+
+        const storedAiAuto = localStorage.getItem('aiAutoPosition');
+        // Default to true if not set
+        setAiAutoPosition(storedAiAuto === null ? true : storedAiAuto === 'true');
+
+        const storedAiThreshold = localStorage.getItem('aiThreshold');
+        if (storedAiThreshold) {
+            setAiThreshold(parseFloat(storedAiThreshold));
+        }
     }, []);
 
     const handleSave = () => {
@@ -34,6 +45,8 @@ export default function Options({ onClose, onUpdate }: OptionsProps) {
         }
         setRetentionPeriod(retention);
         localStorage.setItem('strictLeveling', String(strictLeveling));
+        localStorage.setItem('aiAutoPosition', String(aiAutoPosition));
+        localStorage.setItem('aiThreshold', String(aiThreshold));
         onClose();
     };
 
@@ -134,6 +147,50 @@ export default function Options({ onClose, onUpdate }: OptionsProps) {
                                 <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                             </div>
                         </label>
+                    </div>
+
+                    {/* AI Settings Section */}
+                    <div className="pt-4 border-t border-gray-100">
+                        <h3 className="text-sm font-bold text-gray-900 mb-3">AI Settings</h3>
+
+                        {/* Auto-Position Lines */}
+                        <div className="mb-4">
+                            <label className="flex items-center justify-between cursor-pointer">
+                                <div>
+                                    <span className="block text-sm font-medium text-gray-900">Auto-Position Lines</span>
+                                    <span className="text-xs text-gray-500">Set lines based on detection</span>
+                                </div>
+                                <div className="relative">
+                                    <input
+                                        type="checkbox"
+                                        className="sr-only peer"
+                                        checked={aiAutoPosition}
+                                        onChange={(e) => setAiAutoPosition(e.target.checked)}
+                                    />
+                                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                </div>
+                            </label>
+                        </div>
+
+                        {/* Confidence Threshold */}
+                        <div>
+                            <div className="flex justify-between mb-1">
+                                <label className="text-sm font-medium text-gray-900">Confidence Threshold</label>
+                                <span className="text-xs font-mono text-gray-500">{Math.round(aiThreshold * 100)}%</span>
+                            </div>
+                            <input
+                                type="range"
+                                min="0.1"
+                                max="0.9"
+                                step="0.05"
+                                value={aiThreshold}
+                                onChange={(e) => setAiThreshold(parseFloat(e.target.value))}
+                                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                            />
+                            <p className="text-xs text-gray-500 mt-1">
+                                Lower values detect more objects but may be less accurate.
+                            </p>
+                        </div>
                     </div>
                 </div>
 

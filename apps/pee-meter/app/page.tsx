@@ -1,14 +1,19 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import { BOTTLES, APP_VERSION } from '@/lib/constants';
 import { saveMeasurement, cleanupHistory } from '@/lib/storage';
 import SmartCamera from '@/components/SmartCamera';
 import BottleSelector from '@/components/BottleSelector';
 import ImageUploader from '@/components/ImageUploader';
-import MeasurementCanvas from '@/components/MeasurementCanvas';
 import Options from '@/components/Options';
 import History from '@/components/History';
+
+const MeasurementCanvas = dynamic(() => import('@/components/MeasurementCanvas'), {
+  ssr: false,
+  loading: () => <div className="flex-1 bg-black flex items-center justify-center text-white">Loading Editor...</div>
+});
 
 type Step = 'upload' | 'measure' | 'result';
 
