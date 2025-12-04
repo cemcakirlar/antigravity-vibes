@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { BOTTLES, APP_VERSION } from '@/lib/constants';
 import { saveMeasurement, cleanupHistory } from '@/lib/storage';
+import SmartCamera from '@/components/SmartCamera';
 import BottleSelector from '@/components/BottleSelector';
 import ImageUploader from '@/components/ImageUploader';
 import MeasurementCanvas from '@/components/MeasurementCanvas';
@@ -18,6 +19,7 @@ export default function Home() {
   const [volume, setVolume] = useState<number>(0);
   const [showOptions, setShowOptions] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+  const [showSmartCamera, setShowSmartCamera] = useState(false);
 
   // Load default bottle on mount and cleanup history
   useEffect(() => {
@@ -36,6 +38,7 @@ export default function Home() {
   const handleImageSelect = (url: string) => {
     setImageUrl(url);
     setStep('measure');
+    setShowSmartCamera(false);
   };
 
   const handleReset = () => {
@@ -109,6 +112,13 @@ export default function Home() {
       )}
       {showHistory && <History onClose={() => setShowHistory(false)} />}
 
+      {showSmartCamera && (
+        <SmartCamera
+          onCapture={handleImageSelect}
+          onCancel={() => setShowSmartCamera(false)}
+        />
+      )}
+
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-4 flex flex-col">
         {step === 'upload' && (
@@ -117,12 +127,16 @@ export default function Home() {
               <h2 className="text-2xl font-bold text-gray-800">Capture Photo</h2>
               <p className="text-gray-500">Take a clear photo of the bottle upright</p>
             </div>
-            <ImageUploader onImageSelect={handleImageSelect} />
+            <ImageUploader
+              onImageSelect={handleImageSelect}
+              onSmartCameraClick={() => setShowSmartCamera(true)}
+            />
             <div className="bg-blue-50 p-4 rounded-lg text-sm text-blue-800">
               <strong>Tip:</strong> Ensure the liquid level and the bottle's shoulder are clearly visible.
             </div>
           </div>
         )}
+        {/* ... rest of render ... */}
 
         {step === 'measure' && imageUrl && (
           <div className="flex flex-col landscape:flex-row h-full overflow-hidden">

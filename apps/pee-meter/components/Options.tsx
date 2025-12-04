@@ -12,6 +12,7 @@ interface OptionsProps {
 export default function Options({ onClose, onUpdate }: OptionsProps) {
     const [defaultBottleId, setDefaultBottleId] = useState<string>('');
     const [retention, setRetention] = useState<RetentionPeriod>('forever');
+    const [strictLeveling, setStrictLeveling] = useState(false);
 
     useEffect(() => {
         const stored = localStorage.getItem('defaultBottleId');
@@ -19,6 +20,9 @@ export default function Options({ onClose, onUpdate }: OptionsProps) {
             setDefaultBottleId(stored);
         }
         setRetention(getRetentionPeriod());
+
+        const storedStrict = localStorage.getItem('strictLeveling');
+        setStrictLeveling(storedStrict === 'true');
     }, []);
 
     const handleSave = () => {
@@ -29,6 +33,7 @@ export default function Options({ onClose, onUpdate }: OptionsProps) {
             localStorage.removeItem('defaultBottleId');
         }
         setRetentionPeriod(retention);
+        localStorage.setItem('strictLeveling', String(strictLeveling));
         onClose();
     };
 
@@ -94,8 +99,8 @@ export default function Options({ onClose, onUpdate }: OptionsProps) {
                                 <label
                                     key={opt.val}
                                     className={`flex items-center justify-center p-2 border rounded-lg cursor-pointer text-sm font-medium transition-colors ${retention === opt.val
-                                            ? 'border-blue-500 bg-blue-600 text-white'
-                                            : 'border-gray-200 hover:bg-gray-50 text-gray-700'
+                                        ? 'border-blue-500 bg-blue-600 text-white'
+                                        : 'border-gray-200 hover:bg-gray-50 text-gray-700'
                                         }`}
                                 >
                                     <input
@@ -110,6 +115,25 @@ export default function Options({ onClose, onUpdate }: OptionsProps) {
                                 </label>
                             ))}
                         </div>
+                    </div>
+
+                    {/* Strict Leveling Section */}
+                    <div>
+                        <label className="flex items-center justify-between cursor-pointer">
+                            <div>
+                                <span className="block text-sm font-bold text-gray-900">Strict Leveling</span>
+                                <span className="text-xs text-gray-500">Check side-to-side tilt (gamma)</span>
+                            </div>
+                            <div className="relative">
+                                <input
+                                    type="checkbox"
+                                    className="sr-only peer"
+                                    checked={strictLeveling}
+                                    onChange={(e) => setStrictLeveling(e.target.checked)}
+                                />
+                                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                            </div>
+                        </label>
                     </div>
                 </div>
 
