@@ -1,0 +1,17 @@
+{
+    "name": "orion-backend",
+    "version": "0.0.1",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "dev": "~/.bun/bin/bun --watch src/index.ts",
+        "start": "~/.bun/bin/bun src/index.ts",
+        "build": "~/.bun/bin/bun build src/index.ts --outdir dist --target bun"
+    },
+    "dependencies": {
+        "hono": "^4.6.14"
+    },
+    "devDependencies": {
+        "@types/bun": "latest"
+    }
+}
