@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router";
 import { Plus, Building2, Loader2, Trash2 } from "lucide-react";
-import { workspacesApi } from "../api/workspaces";
-import { useWorkspaces } from "../contexts/WorkspaceContext";
+import { useWorkspaces, useCreateWorkspace, useDeleteWorkspace } from "../api/workspaces";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
@@ -10,32 +9,25 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../co
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "../components/ui/dialog";
 
 export function DashboardPage() {
-  const { workspaces, loading, addWorkspace, removeWorkspace } = useWorkspaces();
+  const { data: workspaces = [], isLoading } = useWorkspaces();
+  const createWorkspace = useCreateWorkspace();
+  const deleteWorkspace = useDeleteWorkspace();
+
   const [showCreate, setShowCreate] = useState(false);
   const [newName, setNewName] = useState("");
-  const [creating, setCreating] = useState(false);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newName.trim()) return;
 
-    setCreating(true);
-    const res = await workspacesApi.create({ name: newName });
-    if (res.success && res.data) {
-      addWorkspace(res.data);
-      setNewName("");
-      setShowCreate(false);
-    }
-    setCreating(false);
+    await createWorkspace.mutateAsync({ name: newName });
+    setNewName("");
+    setShowCreate(false);
   };
 
   const handleDelete = async (workspaceId: string) => {
     if (!confirm("Are you sure you want to delete this workspace? This will delete all applications and forms within it.")) return;
-
-    const res = await workspacesApi.delete(workspaceId);
-    if (res.success) {
-      removeWorkspace(workspaceId);
-    }
+    await deleteWorkspace.mutateAsync(workspaceId);
   };
 
   return (
@@ -69,8 +61,8 @@ export function DashboardPage() {
               <Button type="button" variant="outline" onClick={() => setShowCreate(false)}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={creating || !newName.trim()}>
-                {creating ? "Creating..." : "Create"}
+              <Button type="submit" disabled={createWorkspace.isPending || !newName.trim()}>
+                {createWorkspace.isPending ? "Creating..." : "Create"}
               </Button>
             </DialogFooter>
           </form>
@@ -78,7 +70,7 @@ export function DashboardPage() {
       </Dialog>
 
       {/* Workspaces Grid */}
-      {loading ? (
+      {isLoading ? (
         <div className="flex items-center justify-center py-12">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
@@ -116,6 +108,7 @@ export function DashboardPage() {
                   variant="ghost"
                   size="icon"
                   className="text-muted-foreground hover:text-destructive"
+                  disabled={deleteWorkspace.isPending}
                   onClick={(e) => {
                     e.preventDefault();
                     handleDelete(workspace.id);

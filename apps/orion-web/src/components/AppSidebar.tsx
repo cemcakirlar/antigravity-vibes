@@ -1,5 +1,3 @@
-import type { Application as AppType } from "@/api/applications";
-import { applicationsApi } from "@/api/applications";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -23,46 +21,72 @@ import {
   SidebarSeparator,
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/contexts/AuthContext";
-import { useWorkspaces } from "@/contexts/WorkspaceContext";
+import { useWorkspaces } from "@/api/workspaces";
+import { useApplicationsByWorkspace } from "@/api/applications";
 import { AppWindow, Building2, ChevronRight, Home, LogOut, Plus, Settings } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import { Link, useLocation, useParams } from "react-router";
+
+function WorkspaceItem({
+  workspace,
+  isActive,
+  isExpanded,
+  onToggle,
+}: {
+  workspace: { id: string; name: string };
+  isActive: boolean;
+  isExpanded: boolean;
+  onToggle: (open: boolean) => void;
+}) {
+  const location = useLocation();
+  const { data: apps = [] } = useApplicationsByWorkspace(workspace.id);
+
+  return (
+    <Collapsible open={isExpanded} onOpenChange={onToggle}>
+      <SidebarMenuItem>
+        <Link to={`/workspaces/${workspace.id}`}>
+          <SidebarMenuButton isActive={isActive}>
+            <Building2 className="h-4 w-4 shrink-0" />
+            <span className="truncate">{workspace.name}</span>
+          </SidebarMenuButton>
+        </Link>
+        <CollapsibleTrigger asChild>
+          <Button variant="ghost" size="icon" className="absolute right-1 top-1.5 h-6 w-6">
+            <ChevronRight className="h-4 w-4 transition-transform duration-200 group-data-[state=open]:rotate-90" />
+          </Button>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <SidebarMenuSub>
+            {apps.map((app) => (
+              <SidebarMenuSubItem key={app.id}>
+                <Link to={`/apps/${app.id}`}>
+                  <SidebarMenuSubButton isActive={location.pathname === `/apps/${app.id}`}>
+                    <AppWindow className="h-4 w-4 shrink-0" />
+                    <span className="truncate">{app.name}</span>
+                  </SidebarMenuSubButton>
+                </Link>
+              </SidebarMenuSubItem>
+            ))}
+            {apps.length === 0 && (
+              <SidebarMenuSubItem>
+                <span className="text-xs text-muted-foreground px-2 py-1">No applications</span>
+              </SidebarMenuSubItem>
+            )}
+          </SidebarMenuSub>
+        </CollapsibleContent>
+      </SidebarMenuItem>
+    </Collapsible>
+  );
+}
 
 export function AppSidebar() {
   const { user, logout } = useAuth();
-  const { workspaces } = useWorkspaces();
+  const { data: workspaces = [] } = useWorkspaces();
   const location = useLocation();
   const params = useParams();
-  const [expandedWorkspace, setExpandedWorkspace] = useState<string | null>(null);
-  const [workspaceApps, setWorkspaceApps] = useState<Record<string, AppType[]>>({});
-
-  const loadApps = useCallback(
-    async (workspaceId: string) => {
-      if (workspaceApps[workspaceId]) return;
-      const res = await applicationsApi.listByWorkspace(workspaceId);
-      if (res.success && res.data) {
-        setWorkspaceApps((prev) => ({ ...prev, [workspaceId]: res.data! }));
-      }
-    },
-    [workspaceApps]
+  const [expandedWorkspace, setExpandedWorkspace] = useState<string | null>(
+    params.id && location.pathname.startsWith("/workspaces/") ? params.id : null
   );
-
-  const handleWorkspaceExpand = (workspaceId: string, isOpen: boolean) => {
-    if (isOpen) {
-      setExpandedWorkspace(workspaceId);
-      loadApps(workspaceId);
-    } else {
-      setExpandedWorkspace(null);
-    }
-  };
-
-  // Auto-expand based on current route
-  useEffect(() => {
-    if (params.id && location.pathname.startsWith("/workspaces/")) {
-      setExpandedWorkspace(params.id);
-      loadApps(params.id);
-    }
-  }, [params.id, location.pathname, loadApps]);
 
   const getInitials = (name: string) => {
     return name
@@ -124,44 +148,13 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {workspaces.map((workspace) => (
-                <Collapsible
+                <WorkspaceItem
                   key={workspace.id}
-                  open={expandedWorkspace === workspace.id}
-                  onOpenChange={(isOpen) => handleWorkspaceExpand(workspace.id, isOpen)}
-                >
-                  <SidebarMenuItem>
-                    <Link to={`/workspaces/${workspace.id}`}>
-                      <SidebarMenuButton isActive={location.pathname === `/workspaces/${workspace.id}`}>
-                        <Building2 className="h-4 w-4 shrink-0" />
-                        <span className="truncate">{workspace.name}</span>
-                      </SidebarMenuButton>
-                    </Link>
-                    <CollapsibleTrigger asChild>
-                      <Button variant="ghost" size="icon" className="absolute right-1 top-1.5 h-6 w-6">
-                        <ChevronRight className="h-4 w-4 transition-transform duration-200 group-data-[state=open]:rotate-90" />
-                      </Button>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent>
-                      <SidebarMenuSub>
-                        {workspaceApps[workspace.id]?.map((app) => (
-                          <SidebarMenuSubItem key={app.id}>
-                            <Link to={`/apps/${app.id}`}>
-                              <SidebarMenuSubButton isActive={location.pathname === `/apps/${app.id}`}>
-                                <AppWindow className="h-4 w-4 shrink-0" />
-                                <span className="truncate">{app.name}</span>
-                              </SidebarMenuSubButton>
-                            </Link>
-                          </SidebarMenuSubItem>
-                        ))}
-                        {workspaceApps[workspace.id]?.length === 0 && (
-                          <SidebarMenuSubItem>
-                            <span className="text-xs text-muted-foreground px-2 py-1">No applications</span>
-                          </SidebarMenuSubItem>
-                        )}
-                      </SidebarMenuSub>
-                    </CollapsibleContent>
-                  </SidebarMenuItem>
-                </Collapsible>
+                  workspace={workspace}
+                  isActive={location.pathname === `/workspaces/${workspace.id}`}
+                  isExpanded={expandedWorkspace === workspace.id}
+                  onToggle={(open) => setExpandedWorkspace(open ? workspace.id : null)}
+                />
               ))}
               {workspaces.length === 0 && (
                 <SidebarMenuItem>

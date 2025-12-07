@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react";
-import { api } from "../api/client";
-import { authApi, type User } from "../api/auth";
+import { useQueryClient } from "@tanstack/react-query";
+import { authApi, setAuthToken, type User } from "../api/auth";
 
 interface AuthContextType {
   user: User | null;
@@ -14,58 +14,60 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const queryClient = useQueryClient();
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(() => localStorage.getItem("orion_token"));
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     if (token) {
-      api.setToken(token);
-      authApi.getMe().then((res) => {
-        if (res.success && res.data) {
-          setUser(res.data.user);
-        } else {
-          api.setToken(null);
+      authApi
+        .getMe()
+        .then((userData) => {
+          setUser(userData);
+          setIsLoading(false);
+        })
+        .catch(() => {
+          setAuthToken(null);
           setToken(null);
-          localStorage.removeItem("orion_token");
-        }
-        setIsLoading(false);
-      });
+          setIsLoading(false);
+        });
     } else {
       setIsLoading(false);
     }
   }, [token]);
 
   const login = useCallback(async (email: string, password: string) => {
-    const res = await authApi.login(email, password);
-    if (res.success && res.data) {
-      api.setToken(res.data.token);
-      localStorage.setItem("orion_token", res.data.token);
-      setToken(res.data.token);
-      setUser(res.data.user);
+    try {
+      const result = await authApi.login(email, password);
+      setAuthToken(result.token);
+      setToken(result.token);
+      setUser(result.user);
       return { success: true };
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : "Login failed" };
     }
-    return { success: false, error: res.error };
   }, []);
 
   const register = useCallback(async (email: string, password: string, name: string) => {
-    const res = await authApi.register(email, password, name);
-    if (res.success && res.data) {
-      api.setToken(res.data.token);
-      localStorage.setItem("orion_token", res.data.token);
-      setToken(res.data.token);
-      setUser(res.data.user);
+    try {
+      const result = await authApi.register(email, password, name);
+      setAuthToken(result.token);
+      setToken(result.token);
+      setUser(result.user);
       return { success: true };
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : "Registration failed" };
     }
-    return { success: false, error: res.error };
   }, []);
 
   const logout = useCallback(() => {
-    api.setToken(null);
-    localStorage.removeItem("orion_token");
+    setAuthToken(null);
     setToken(null);
     setUser(null);
-  }, []);
+    // Clear all cached data on logout
+    queryClient.clear();
+  }, [queryClient]);
 
   return <AuthContext.Provider value={{ user, token, isLoading, login, register, logout }}>{children}</AuthContext.Provider>;
 }

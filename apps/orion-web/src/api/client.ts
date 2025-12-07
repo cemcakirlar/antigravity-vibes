@@ -1,79 +1,47 @@
+import axios, { type AxiosInstance } from "axios";
+
 const API_BASE_URL = "http://localhost:3000/api";
 
-interface ApiResponse<T> {
-  success: boolean;
-  data?: T;
-  error?: string;
-}
+// Create axios instance with default config
+export const apiClient: AxiosInstance = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
 
-class ApiClient {
-  private token: string | null = null;
-
-  setToken(token: string | null) {
-    this.token = token;
+// Request interceptor to add auth token
+apiClient.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem("orion_token");
     if (token) {
-      localStorage.setItem("orion_token", token);
-    } else {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+// Response interceptor for error handling
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    // Handle 401 errors (unauthorized)
+    if (error.response?.status === 401) {
       localStorage.removeItem("orion_token");
+      window.location.href = "/login";
     }
+    return Promise.reject(error);
   }
+);
 
-  getToken(): string | null {
-    if (!this.token) {
-      this.token = localStorage.getItem("orion_token");
-    }
-    return this.token;
+// Token management helpers
+export const setAuthToken = (token: string | null) => {
+  if (token) {
+    localStorage.setItem("orion_token", token);
+  } else {
+    localStorage.removeItem("orion_token");
   }
+};
 
-  private async request<T>(endpoint: string, options: RequestInit = {}): Promise<ApiResponse<T>> {
-    const token = this.getToken();
-
-    const headers: HeadersInit = {
-      "Content-Type": "application/json",
-      ...options.headers,
-    };
-
-    if (token) {
-      (headers as Record<string, string>)["Authorization"] = `Bearer ${token}`;
-    }
-
-    try {
-      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-        ...options,
-        headers,
-      });
-
-      const data = await response.json();
-      return data;
-    } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : "Network error",
-      };
-    }
-  }
-
-  async get<T>(endpoint: string): Promise<ApiResponse<T>> {
-    return this.request<T>(endpoint, { method: "GET" });
-  }
-
-  async post<T>(endpoint: string, body?: unknown): Promise<ApiResponse<T>> {
-    return this.request<T>(endpoint, {
-      method: "POST",
-      body: body ? JSON.stringify(body) : undefined,
-    });
-  }
-
-  async patch<T>(endpoint: string, body?: unknown): Promise<ApiResponse<T>> {
-    return this.request<T>(endpoint, {
-      method: "PATCH",
-      body: body ? JSON.stringify(body) : undefined,
-    });
-  }
-
-  async delete<T>(endpoint: string): Promise<ApiResponse<T>> {
-    return this.request<T>(endpoint, { method: "DELETE" });
-  }
-}
-
-export const api = new ApiClient();
+export const getAuthToken = () => localStorage.getItem("orion_token");

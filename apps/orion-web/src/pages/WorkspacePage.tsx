@@ -1,8 +1,8 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
 import { useParams, Link } from "react-router";
 import { Plus, AppWindow, Loader2, Trash2 } from "lucide-react";
-import { workspacesApi, type Workspace } from "../api/workspaces";
-import { applicationsApi, type Application } from "../api/applications";
+import { useWorkspace } from "../api/workspaces";
+import { useApplicationsByWorkspace, useCreateApplication, useDeleteApplication } from "../api/applications";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
@@ -11,59 +11,37 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 
 export function WorkspacePage() {
   const { id } = useParams();
-  const [workspace, setWorkspace] = useState<Workspace | null>(null);
-  const [applications, setApplications] = useState<Application[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: workspace, isLoading: workspaceLoading } = useWorkspace(id!);
+  const { data: applications = [], isLoading: appsLoading } = useApplicationsByWorkspace(id!);
+  const createApplication = useCreateApplication();
+  const deleteApplication = useDeleteApplication();
+
   const [showCreate, setShowCreate] = useState(false);
   const [newName, setNewName] = useState("");
   const [newDesc, setNewDesc] = useState("");
-  const [creating, setCreating] = useState(false);
-
-  const loadData = useCallback(async () => {
-    if (!id) return;
-    const [wsRes, appsRes] = await Promise.all([workspacesApi.get(id), applicationsApi.listByWorkspace(id)]);
-
-    if (wsRes.success && wsRes.data) {
-      setWorkspace(wsRes.data);
-    }
-    if (appsRes.success && appsRes.data) {
-      setApplications(appsRes.data);
-    }
-    setLoading(false);
-  }, [id]);
-
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newName.trim() || !id) return;
 
-    setCreating(true);
-    const res = await applicationsApi.create(id, {
+    await createApplication.mutateAsync({
+      workspaceId: id,
       name: newName,
       description: newDesc || undefined,
     });
-    if (res.success && res.data) {
-      setApplications([res.data, ...applications]);
-      setNewName("");
-      setNewDesc("");
-      setShowCreate(false);
-    }
-    setCreating(false);
+    setNewName("");
+    setNewDesc("");
+    setShowCreate(false);
   };
 
   const handleDelete = async (appId: string) => {
     if (!confirm("Are you sure you want to delete this application?")) return;
-
-    const res = await applicationsApi.delete(appId);
-    if (res.success) {
-      setApplications(applications.filter((a) => a.id !== appId));
-    }
+    await deleteApplication.mutateAsync(appId);
   };
 
-  if (loading) {
+  const isLoading = workspaceLoading || appsLoading;
+
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -106,8 +84,8 @@ export function WorkspacePage() {
               <Button type="button" variant="outline" onClick={() => setShowCreate(false)}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={creating || !newName.trim()}>
-                {creating ? "Creating..." : "Create"}
+              <Button type="submit" disabled={createApplication.isPending || !newName.trim()}>
+                {createApplication.isPending ? "Creating..." : "Create"}
               </Button>
             </DialogFooter>
           </form>
@@ -149,6 +127,7 @@ export function WorkspacePage() {
                   variant="ghost"
                   size="icon"
                   className="text-muted-foreground hover:text-destructive"
+                  disabled={deleteApplication.isPending}
                   onClick={(e) => {
                     e.preventDefault();
                     handleDelete(app.id);

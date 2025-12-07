@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
-import { WorkspaceProvider } from "./contexts/WorkspaceContext";
+import { QueryProvider } from "./lib/query-client";
 import { LoginPage } from "./pages/LoginPage";
 import { RegisterPage } from "./pages/RegisterPage";
 import { DashboardPage } from "./pages/DashboardPage";
@@ -88,11 +88,11 @@ function App() {
   return (
     <BrowserRouter>
       <ThemeProvider>
-        <AuthProvider>
-          <WorkspaceProvider>
+        <QueryProvider>
+          <AuthProvider>
             <AppRoutes />
-          </WorkspaceProvider>
-        </AuthProvider>
+          </AuthProvider>
+        </QueryProvider>
       </ThemeProvider>
     </BrowserRouter>
   );

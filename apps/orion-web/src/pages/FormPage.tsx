@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
 import { useParams } from "react-router";
 import {
   Plus,
@@ -15,12 +15,18 @@ import {
   Link as LinkIcon,
   FileText as FileIcon,
   AlignLeft,
+  Database,
+  Settings,
 } from "lucide-react";
-import { formsApi, fieldsApi, type FormWithFields, type Field, type FieldType } from "../api/forms";
+import { useForm, useCreateField, useDeleteField, type Field, type FieldType } from "../api/forms";
+import { useCreateRecord, useUpdateRecord, type FormRecord } from "../api/records";
+import { RecordTable } from "../components/RecordTable";
+import { RecordForm } from "../components/RecordForm";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Card, CardContent } from "../components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "../components/ui/dialog";
 import { Checkbox } from "../components/ui/checkbox";
 
@@ -41,9 +47,16 @@ const FIELD_TYPES: { value: FieldType; label: string; icon: React.ReactNode }[] 
 
 export function FormPage() {
   const { id } = useParams();
-  const [form, setForm] = useState<FormWithFields | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [showCreate, setShowCreate] = useState(false);
+  const { data: form, isLoading } = useForm(id!);
+  const createField = useCreateField();
+  const deleteField = useDeleteField();
+  const createRecord = useCreateRecord();
+  const updateRecord = useUpdateRecord();
+
+  const [activeTab, setActiveTab] = useState("data");
+  const [showCreateField, setShowCreateField] = useState(false);
+  const [showRecordForm, setShowRecordForm] = useState(false);
+  const [editingRecord, setEditingRecord] = useState<FormRecord | null>(null);
   const [newField, setNewField] = useState({
     name: "",
     label: "",
@@ -51,54 +64,48 @@ export function FormPage() {
     required: false,
     unique: false,
   });
-  const [creating, setCreating] = useState(false);
 
-  const loadData = useCallback(async () => {
-    if (!id) return;
-    const res = await formsApi.get(id);
-    if (res.success && res.data) {
-      setForm(res.data);
-    }
-    setLoading(false);
-  }, [id]);
-
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
-
-  const handleCreate = async (e: React.FormEvent) => {
+  const handleCreateField = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newField.name.trim() || !newField.label.trim() || !id) return;
 
-    setCreating(true);
-    const res = await fieldsApi.create(id, newField);
-    if (res.success && res.data && form) {
-      setForm({
-        ...form,
-        fields: [...form.fields, res.data],
-      });
-      setNewField({
-        name: "",
-        label: "",
-        type: "text",
-        required: false,
-        unique: false,
-      });
-      setShowCreate(false);
-    }
-    setCreating(false);
+    await createField.mutateAsync({
+      formId: id,
+      ...newField,
+    });
+    setNewField({
+      name: "",
+      label: "",
+      type: "text",
+      required: false,
+      unique: false,
+    });
+    setShowCreateField(false);
   };
 
-  const handleDelete = async (fieldId: string) => {
+  const handleDeleteField = async (fieldId: string) => {
     if (!confirm("Are you sure you want to delete this field?")) return;
+    await deleteField.mutateAsync(fieldId);
+  };
 
-    const res = await fieldsApi.delete(fieldId);
-    if (res.success && form) {
-      setForm({
-        ...form,
-        fields: form.fields.filter((f) => f.id !== fieldId),
-      });
+  const handleAddRecord = () => {
+    setEditingRecord(null);
+    setShowRecordForm(true);
+  };
+
+  const handleEditRecord = (record: FormRecord) => {
+    setEditingRecord(record);
+    setShowRecordForm(true);
+  };
+
+  const handleRecordSubmit = async (data: Record<string, unknown>) => {
+    if (editingRecord) {
+      await updateRecord.mutateAsync({ id: editingRecord.id, data });
+    } else if (id) {
+      await createRecord.mutateAsync({ formId: id, data });
     }
+    setShowRecordForm(false);
+    setEditingRecord(null);
   };
 
   const getFieldIcon = (type: FieldType) => {
@@ -106,7 +113,7 @@ export function FormPage() {
     return fieldType?.icon || <Type className="h-4 w-4" />;
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -114,27 +121,114 @@ export function FormPage() {
     );
   }
 
+  const fields = form?.fields || [];
+
   return (
     <div className="p-6">
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-3xl font-bold">{form?.name}</h1>
           <p className="text-muted-foreground mt-1 font-mono text-sm">{form?.tableName}</p>
         </div>
-        <Button onClick={() => setShowCreate(true)}>
-          <Plus className="h-4 w-4" />
-          Add Field
-        </Button>
       </div>
 
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="mb-6">
+          <TabsTrigger value="data" className="gap-2" data-testid="tab-data">
+            <Database className="h-4 w-4" />
+            Data
+          </TabsTrigger>
+          <TabsTrigger value="fields" className="gap-2" data-testid="tab-fields">
+            <Settings className="h-4 w-4" />
+            Fields
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Data Tab - Record Management */}
+        <TabsContent value="data">
+          {fields.length === 0 ? (
+            <Card className="text-center py-12">
+              <CardContent>
+                <Type className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                <h3 className="text-xl font-semibold mb-2">No fields defined</h3>
+                <p className="text-muted-foreground mb-4">Add fields to this form before entering data</p>
+                <Button onClick={() => setActiveTab("fields")}>
+                  <Plus className="h-4 w-4" />
+                  Add Fields
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            <RecordTable formId={id!} fields={fields} onAddRecord={handleAddRecord} onEditRecord={handleEditRecord} />
+          )}
+        </TabsContent>
+
+        {/* Fields Tab - Schema Management */}
+        <TabsContent value="fields">
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-muted-foreground">Define the structure of your data</p>
+            <Button onClick={() => setShowCreateField(true)}>
+              <Plus className="h-4 w-4" />
+              Add Field
+            </Button>
+          </div>
+
+          {fields.length === 0 ? (
+            <Card className="text-center py-12">
+              <CardContent>
+                <Type className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                <h3 className="text-xl font-semibold mb-2">No fields yet</h3>
+                <p className="text-muted-foreground mb-4">Define the fields for your data</p>
+                <Button onClick={() => setShowCreateField(true)}>
+                  <Plus className="h-4 w-4" />
+                  Add Field
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-2">
+              {fields.map((field: Field) => (
+                <Card key={field.id} className="hover:border-border transition-all">
+                  <div className="flex items-center gap-4 p-4">
+                    <div className="text-muted-foreground cursor-grab">
+                      <GripVertical className="h-5 w-5" />
+                    </div>
+                    <div className="p-2 rounded-lg bg-muted text-muted-foreground">{getFieldIcon(field.type)}</div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">{field.label}</span>
+                        {field.required && <span className="text-xs px-1.5 py-0.5 rounded bg-destructive/10 text-destructive">Required</span>}
+                        {field.unique && <span className="text-xs px-1.5 py-0.5 rounded bg-chart-4/10 text-chart-4">Unique</span>}
+                      </div>
+                      <div className="text-sm text-muted-foreground font-mono">
+                        {field.name} · {field.type}
+                      </div>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="text-muted-foreground hover:text-destructive"
+                      disabled={deleteField.isPending}
+                      onClick={() => handleDeleteField(field.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
+
       {/* Create Field Modal */}
-      <Dialog open={showCreate} onOpenChange={setShowCreate}>
+      <Dialog open={showCreateField} onOpenChange={setShowCreateField}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>Add Field</DialogTitle>
             <DialogDescription>Add a new field to this form</DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleCreate}>
+          <form onSubmit={handleCreateField}>
             <div className="space-y-4 py-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -203,57 +297,26 @@ export function FormPage() {
               </div>
             </div>
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setShowCreate(false)}>
+              <Button type="button" variant="outline" onClick={() => setShowCreateField(false)}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={creating || !newField.name.trim() || !newField.label.trim()}>
-                {creating ? "Adding..." : "Add Field"}
+              <Button type="submit" disabled={createField.isPending || !newField.name.trim() || !newField.label.trim()}>
+                {createField.isPending ? "Adding..." : "Add Field"}
               </Button>
             </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
 
-      {/* Fields List */}
-      {!form?.fields || form.fields.length === 0 ? (
-        <Card className="text-center py-12">
-          <CardContent>
-            <Type className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-xl font-semibold mb-2">No fields yet</h3>
-            <p className="text-muted-foreground mb-4">Define the fields for your data</p>
-            <Button onClick={() => setShowCreate(true)}>
-              <Plus className="h-4 w-4" />
-              Add Field
-            </Button>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="space-y-2">
-          {form.fields.map((field: Field) => (
-            <Card key={field.id} className="hover:border-border transition-all">
-              <div className="flex items-center gap-4 p-4">
-                <div className="text-muted-foreground cursor-grab">
-                  <GripVertical className="h-5 w-5" />
-                </div>
-                <div className="p-2 rounded-lg bg-muted text-muted-foreground">{getFieldIcon(field.type)}</div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium">{field.label}</span>
-                    {field.required && <span className="text-xs px-1.5 py-0.5 rounded bg-destructive/10 text-destructive">Required</span>}
-                    {field.unique && <span className="text-xs px-1.5 py-0.5 rounded bg-chart-4/10 text-chart-4">Unique</span>}
-                  </div>
-                  <div className="text-sm text-muted-foreground font-mono">
-                    {field.name} · {field.type}
-                  </div>
-                </div>
-                <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive" onClick={() => handleDelete(field.id)}>
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-            </Card>
-          ))}
-        </div>
-      )}
+      {/* Record Form Modal */}
+      <RecordForm
+        open={showRecordForm}
+        onOpenChange={setShowRecordForm}
+        fields={fields}
+        record={editingRecord}
+        onSubmit={handleRecordSubmit}
+        isLoading={createRecord.isPending || updateRecord.isPending}
+      />
     </div>
   );
 }

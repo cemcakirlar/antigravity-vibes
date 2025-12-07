@@ -117,6 +117,19 @@ export const fields = pgTable("fields", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+// Records (form data entries)
+export const records = pgTable("records", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  formId: uuid("form_id")
+    .notNull()
+    .references(() => forms.id, { onDelete: "cascade" }),
+  data: jsonb("data").notNull().default({}), // Field values as JSON
+  createdBy: uuid("created_by").references(() => users.id, { onDelete: "set null" }),
+  updatedBy: uuid("updated_by").references(() => users.id, { onDelete: "set null" }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 // ============================================
 // RELATIONS
 // ============================================
@@ -160,12 +173,24 @@ export const formsRelations = relations(forms, ({ one, many }) => ({
     references: [applications.id],
   }),
   fields: many(fields),
+  records: many(records),
 }));
 
 export const fieldsRelations = relations(fields, ({ one }) => ({
   form: one(forms, {
     fields: [fields.formId],
     references: [forms.id],
+  }),
+}));
+
+export const recordsRelations = relations(records, ({ one }) => ({
+  form: one(forms, {
+    fields: [records.formId],
+    references: [forms.id],
+  }),
+  creator: one(users, {
+    fields: [records.createdBy],
+    references: [users.id],
   }),
 }));
 
@@ -190,3 +215,6 @@ export type NewForm = typeof forms.$inferInsert;
 
 export type Field = typeof fields.$inferSelect;
 export type NewField = typeof fields.$inferInsert;
+
+export type Record = typeof records.$inferSelect;
+export type NewRecord = typeof records.$inferInsert;

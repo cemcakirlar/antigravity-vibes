@@ -1,4 +1,4 @@
-import { api } from "./client";
+import { apiClient, setAuthToken } from "./client";
 
 export interface User {
   id: string;
@@ -13,16 +13,22 @@ export interface AuthResult {
   token: string;
 }
 
+// Auth API functions (not using React Query for auth since it's special)
 export const authApi = {
-  async login(email: string, password: string) {
-    return api.post<AuthResult>("/auth/login", { email, password });
+  async login(email: string, password: string): Promise<AuthResult> {
+    const { data } = await apiClient.post<{ success: boolean; data: AuthResult }>("/auth/login", { email, password });
+    return data.data;
   },
 
-  async register(email: string, password: string, name: string) {
-    return api.post<AuthResult>("/auth/register", { email, password, name });
+  async register(email: string, password: string, name: string): Promise<AuthResult> {
+    const { data } = await apiClient.post<{ success: boolean; data: AuthResult }>("/auth/register", { email, password, name });
+    return data.data;
   },
 
-  async getMe() {
-    return api.get<{ user: User }>("/auth/me");
+  async getMe(): Promise<User> {
+    const { data } = await apiClient.get<{ success: boolean; data: { user: User } }>("/auth/me");
+    return data.data.user;
   },
 };
+
+export { setAuthToken };
