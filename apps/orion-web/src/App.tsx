@@ -1,24 +1,101 @@
-function App() {
-  return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-gray-900 text-white">
-      <div className="rounded-xl bg-gray-800 p-8 shadow-2xl ring-1 ring-white/10">
-        <h1 className="mb-4 text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400">
-          Orion Web
-        </h1>
-        <p className="text-gray-400">
-          Tailwind CSS v4 setup is working perfectly! 🚀
-        </p>
-        <div className="mt-6 flex gap-4">
-          <button className="rounded-lg bg-blue-600 px-4 py-2 font-semibold hover:bg-blue-500 transition">
-            Get Started
-          </button>
-          <button className="rounded-lg bg-gray-700 px-4 py-2 font-semibold hover:bg-gray-600 transition">
-            Documentation
-          </button>
-        </div>
+import { BrowserRouter, Routes, Route, Navigate } from "react-router";
+import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import { ThemeProvider } from "./contexts/ThemeContext";
+import { WorkspaceProvider } from "./contexts/WorkspaceContext";
+import { LoginPage } from "./pages/LoginPage";
+import { RegisterPage } from "./pages/RegisterPage";
+import { DashboardPage } from "./pages/DashboardPage";
+import { WorkspacePage } from "./pages/WorkspacePage";
+import { ApplicationPage } from "./pages/ApplicationPage";
+import { FormPage } from "./pages/FormPage";
+import { AppLayout } from "./components/AppLayout";
+import { Loader2 } from "lucide-react";
+
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const { user, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
-    </div>
-  )
+    );
+  }
+
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return <>{children}</>;
 }
 
-export default App
+function PublicRoute({ children }: { children: React.ReactNode }) {
+  const { user, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (user) {
+    return <Navigate to="/" replace />;
+  }
+
+  return <>{children}</>;
+}
+
+function AppRoutes() {
+  return (
+    <Routes>
+      <Route
+        path="/login"
+        element={
+          <PublicRoute>
+            <LoginPage />
+          </PublicRoute>
+        }
+      />
+      <Route
+        path="/register"
+        element={
+          <PublicRoute>
+            <RegisterPage />
+          </PublicRoute>
+        }
+      />
+
+      {/* Protected routes with sidebar layout */}
+      <Route
+        element={
+          <ProtectedRoute>
+            <AppLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route path="/" element={<DashboardPage />} />
+        <Route path="/workspaces/:id" element={<WorkspacePage />} />
+        <Route path="/apps/:id" element={<ApplicationPage />} />
+        <Route path="/forms/:id" element={<FormPage />} />
+      </Route>
+    </Routes>
+  );
+}
+
+function App() {
+  return (
+    <BrowserRouter>
+      <ThemeProvider>
+        <AuthProvider>
+          <WorkspaceProvider>
+            <AppRoutes />
+          </WorkspaceProvider>
+        </AuthProvider>
+      </ThemeProvider>
+    </BrowserRouter>
+  );
+}
+
+export default App;
