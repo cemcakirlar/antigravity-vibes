@@ -7,7 +7,8 @@
             "ESNext"
         ],
         "types": [
-            "bun"
+            "bun",
+            "node"
         ],
         "strict": true,
         "esModuleInterop": true,
@@ -18,7 +19,8 @@
         "outDir": "./dist"
     },
     "include": [
-        "src/**/*"
+        "src/**/*",
+        "drizzle.config.ts"
     ],
     "exclude": [
         "node_modules",
