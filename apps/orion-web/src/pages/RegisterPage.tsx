@@ -37,7 +37,7 @@ export function RegisterPage() {
           <CardTitle className="text-3xl bg-linear-to-r from-primary to-chart-2 bg-clip-text text-transparent">Orion</CardTitle>
           <CardDescription>Create your account</CardDescription>
         </CardHeader>
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} className="space-y-4">
           <CardContent className="space-y-4">
             {error && <div className="rounded-lg bg-destructive/10 border border-destructive/50 p-3 text-sm text-destructive">{error}</div>}
             <div className="space-y-2">

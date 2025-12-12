@@ -38,7 +38,8 @@ interface ApiResponse<T> {
 export const recordKeys = {
   all: ["records"] as const,
   lists: () => [...recordKeys.all, "list"] as const,
-  listByForm: (formId: string, page?: number) => [...recordKeys.lists(), { formId, page }] as const,
+  listByFormAll: (formId: string) => [...recordKeys.lists(), formId] as const,
+  listByForm: (formId: string, page?: number) => [...recordKeys.listByFormAll(formId), { page }] as const,
   details: () => [...recordKeys.all, "detail"] as const,
   detail: (id: string) => [...recordKeys.details(), id] as const,
 };
@@ -102,8 +103,8 @@ export function useCreateRecord() {
   return useMutation({
     mutationFn: createRecord,
     onSuccess: (data) => {
-      // Invalidate the records list for this form
-      queryClient.invalidateQueries({ queryKey: recordKeys.listByForm(data.formId) });
+      // Invalidate ALL pages of records list for this form
+      queryClient.invalidateQueries({ queryKey: recordKeys.listByFormAll(data.formId) });
       // Also invalidate form detail if it shows record count
       queryClient.invalidateQueries({ queryKey: formKeys.detail(data.formId) });
     },
@@ -116,7 +117,8 @@ export function useUpdateRecord() {
   return useMutation({
     mutationFn: updateRecord,
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: recordKeys.listByForm(data.formId) });
+      // Invalidate ALL pages of records list for this form
+      queryClient.invalidateQueries({ queryKey: recordKeys.listByFormAll(data.formId) });
       queryClient.setQueryData(recordKeys.detail(data.id), data);
     },
   });

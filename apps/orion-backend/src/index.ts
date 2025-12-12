@@ -9,6 +9,7 @@ import { applicationRoutes } from "./modules/application/application.routes";
 import { formRoutes } from "./modules/form/form.routes";
 import { fieldRoutes } from "./modules/field/field.routes";
 import { recordRoutes } from "./modules/record/record.routes";
+import { userRoutes } from "./modules/user/user.routes";
 
 const app = new Hono();
 
@@ -51,6 +52,9 @@ api.route("/", fieldRoutes);
 
 // Mount record routes (has mixed paths)
 api.route("/", recordRoutes);
+
+// Mount user routes
+api.route("/users", userRoutes);
 
 // Mount API under /api prefix
 app.route("/api", api);

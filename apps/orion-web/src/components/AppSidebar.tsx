@@ -23,7 +23,7 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { useWorkspaces } from "@/api/workspaces";
 import { useApplicationsByWorkspace } from "@/api/applications";
-import { AppWindow, Building2, ChevronRight, Home, LogOut, Plus, Settings } from "lucide-react";
+import { AppWindow, Building2, ChevronRight, Home, LogOut, Plus, Settings, Users } from "lucide-react";
 import { useState } from "react";
 import { Link, useLocation, useParams } from "react-router";
 
@@ -128,6 +128,14 @@ export function AppSidebar() {
                 <SidebarMenuButton isActive={location.pathname === "/"}>
                   <Home className="h-4 w-4" />
                   <span>Dashboard</span>
+                </SidebarMenuButton>
+              </Link>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <Link to="/users">
+                <SidebarMenuButton isActive={location.pathname === "/users"}>
+                  <Users className="h-4 w-4" />
+                  <span>Users</span>
                 </SidebarMenuButton>
               </Link>
             </SidebarMenuItem>
