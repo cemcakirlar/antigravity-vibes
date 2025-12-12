@@ -1,39 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "./client";
 import { workspaceKeys } from "./workspaces";
+import type { Application, ApplicationWithForms, ApiResponse } from "@orion/shared";
 
-// Types
-export interface Application {
-  id: string;
-  workspaceId: string;
-  name: string;
-  slug: string;
-  description?: string;
-  settings: Record<string, unknown>;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface Form {
-  id: string;
-  applicationId: string;
-  name: string;
-  slug: string;
-  tableName: string;
-  description?: string;
-  sortOrder: number;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface ApplicationWithForms extends Application {
-  forms: Form[];
-}
-
-interface ApiResponse<T> {
-  success: boolean;
-  data: T;
-}
+// Re-export types for components
+export type { Application, ApplicationWithForms } from "@orion/shared";
 
 // Query Keys
 export const applicationKeys = {

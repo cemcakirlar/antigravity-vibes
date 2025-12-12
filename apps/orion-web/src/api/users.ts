@@ -1,30 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "./client";
+import type { User, ApiResponse, PaginatedResponse } from "@orion/shared";
 
-// Types
-export interface User {
-  id: string;
-  email: string;
-  name: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface UserListResponse {
-  success: boolean;
-  data: User[];
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
-}
-
-interface ApiResponse<T> {
-  success: boolean;
-  data: T;
-}
+// Re-export User type for components that import from this file
+export type { User } from "@orion/shared";
 
 // Query Keys
 export const userKeys = {
@@ -36,8 +15,8 @@ export const userKeys = {
 };
 
 // API Functions
-const fetchUsers = async (page = 1, limit = 50): Promise<{ data: User[]; pagination: UserListResponse["pagination"] }> => {
-  const { data } = await apiClient.get<UserListResponse>("/users", { params: { page, limit } });
+const fetchUsers = async (page = 1, limit = 50): Promise<{ data: User[]; pagination: PaginatedResponse<User>["pagination"] }> => {
+  const { data } = await apiClient.get<PaginatedResponse<User>>("/users", { params: { page, limit } });
   return { data: data.data, pagination: data.pagination };
 };
 

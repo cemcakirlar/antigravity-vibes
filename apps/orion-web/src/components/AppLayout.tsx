@@ -2,25 +2,24 @@ import { AppSidebar } from "@/components/AppSidebar";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import { Separator } from "@/components/ui/separator";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import { Outlet, useLocation, useParams } from "react-router";
+import { Outlet, useParams, Link } from "react-router";
 
 function useBreadcrumbs() {
-  const location = useLocation();
   const params = useParams();
-  const segments = location.pathname.split("/").filter(Boolean);
+  const { workspaceId, appId, formId } = params as { workspaceId?: string; appId?: string; formId?: string };
 
   const breadcrumbs: { label: string; href?: string }[] = [{ label: "Dashboard", href: "/" }];
 
-  if (segments[0] === "workspaces" && params.id) {
-    breadcrumbs.push({ label: "Workspace", href: `/workspaces/${params.id}` });
+  if (workspaceId) {
+    breadcrumbs.push({ label: "Workspace", href: `/workspaces/${workspaceId}` });
   }
 
-  if (segments[0] === "apps" && params.id) {
-    breadcrumbs.push({ label: "Application", href: `/apps/${params.id}` });
+  if (workspaceId && appId) {
+    breadcrumbs.push({ label: "Application", href: `/workspaces/${workspaceId}/apps/${appId}` });
   }
 
-  if (segments[0] === "forms" && params.id) {
-    breadcrumbs.push({ label: "Form", href: `/forms/${params.id}` });
+  if (workspaceId && appId && formId) {
+    breadcrumbs.push({ label: "Form", href: `/workspaces/${workspaceId}/apps/${appId}/forms/${formId}` });
   }
 
   return breadcrumbs;
@@ -44,7 +43,9 @@ export function AppLayout() {
                 <BreadcrumbItem key={index}>
                   {index < breadcrumbs.length - 1 ? (
                     <>
-                      <BreadcrumbLink href={crumb.href}>{crumb.label}</BreadcrumbLink>
+                      <BreadcrumbLink asChild>
+                        <Link to={crumb.href!}>{crumb.label}</Link>
+                      </BreadcrumbLink>
                       <BreadcrumbSeparator />
                     </>
                   ) : (

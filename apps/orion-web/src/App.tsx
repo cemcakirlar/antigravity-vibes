@@ -9,6 +9,7 @@ import { WorkspacePage } from "./pages/WorkspacePage";
 import { ApplicationPage } from "./pages/ApplicationPage";
 import { FormPage } from "./pages/FormPage";
 import UsersPage from "./pages/UsersPage";
+import WorkspaceMembersPage from "./pages/WorkspaceMembersPage";
 import { AppLayout } from "./components/AppLayout";
 import { Loader2 } from "lucide-react";
 
@@ -78,9 +79,10 @@ function AppRoutes() {
       >
         <Route path="/" element={<DashboardPage />} />
         <Route path="/users" element={<UsersPage />} />
-        <Route path="/workspaces/:id" element={<WorkspacePage />} />
-        <Route path="/apps/:id" element={<ApplicationPage />} />
-        <Route path="/forms/:id" element={<FormPage />} />
+        <Route path="/workspaces/:workspaceId" element={<WorkspacePage />} />
+        <Route path="/workspaces/:workspaceId/members" element={<WorkspaceMembersPage />} />
+        <Route path="/workspaces/:workspaceId/apps/:appId" element={<ApplicationPage />} />
+        <Route path="/workspaces/:workspaceId/apps/:appId/forms/:formId" element={<FormPage />} />
       </Route>
     </Routes>
   );

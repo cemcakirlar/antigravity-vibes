@@ -1,20 +1,26 @@
 import { useState } from "react";
 import { Link } from "react-router";
-import { Plus, Building2, Loader2, Trash2 } from "lucide-react";
-import { useWorkspaces, useCreateWorkspace, useDeleteWorkspace } from "../api/workspaces";
+import { Plus, Building2, Loader2, Trash2, Pencil } from "lucide-react";
+import { useWorkspaces, useCreateWorkspace, useDeleteWorkspace, useUpdateWorkspace, type Workspace } from "../api/workspaces";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "../components/ui/dialog";
+import { toast } from "sonner";
 
 export function DashboardPage() {
   const { data: workspaces = [], isLoading } = useWorkspaces();
   const createWorkspace = useCreateWorkspace();
   const deleteWorkspace = useDeleteWorkspace();
+  const updateWorkspace = useUpdateWorkspace();
 
   const [showCreate, setShowCreate] = useState(false);
   const [newName, setNewName] = useState("");
+
+  // Edit state
+  const [editingWorkspace, setEditingWorkspace] = useState<Workspace | null>(null);
+  const [editName, setEditName] = useState("");
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,6 +34,24 @@ export function DashboardPage() {
   const handleDelete = async (workspaceId: string) => {
     if (!confirm("Are you sure you want to delete this workspace? This will delete all applications and forms within it.")) return;
     await deleteWorkspace.mutateAsync(workspaceId);
+  };
+
+  const handleEdit = (workspace: Workspace) => {
+    setEditingWorkspace(workspace);
+    setEditName(workspace.name);
+  };
+
+  const handleUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingWorkspace || !editName.trim()) return;
+
+    try {
+      await updateWorkspace.mutateAsync({ id: editingWorkspace.id, name: editName });
+      toast.success("Workspace updated");
+      setEditingWorkspace(null);
+    } catch {
+      toast.error("Failed to update workspace");
+    }
   };
 
   return (
@@ -69,6 +93,32 @@ export function DashboardPage() {
         </DialogContent>
       </Dialog>
 
+      {/* Edit Workspace Modal */}
+      <Dialog open={!!editingWorkspace} onOpenChange={(open) => !open && setEditingWorkspace(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Workspace</DialogTitle>
+            <DialogDescription>Update workspace settings</DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleUpdate}>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-name">Name</Label>
+                <Input id="edit-name" value={editName} onChange={(e) => setEditName(e.target.value)} autoFocus />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setEditingWorkspace(null)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={updateWorkspace.isPending || !editName.trim()}>
+                {updateWorkspace.isPending ? "Saving..." : "Save"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
       {/* Workspaces Grid */}
       {isLoading ? (
         <div className="flex items-center justify-center py-12">
@@ -103,7 +153,18 @@ export function DashboardPage() {
                   </div>
                 </CardHeader>
               </Link>
-              <div className="px-6 pb-4 flex justify-end">
+              <div className="px-6 pb-4 flex justify-end gap-1">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-muted-foreground hover:text-foreground"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleEdit(workspace);
+                  }}
+                >
+                  <Pencil className="h-4 w-4" />
+                </Button>
                 <Button
                   variant="ghost"
                   size="icon"

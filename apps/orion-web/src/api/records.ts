@@ -1,38 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "./client";
 import { formKeys } from "./forms";
+import type { FormRecord, ApiResponse, PaginatedResponse } from "@orion/shared";
 
-// Types
-export interface FormRecord {
-  id: string;
-  formId: string;
-  data: Record<string, unknown>;
-  createdBy: string | null;
-  updatedBy: string | null;
-  createdAt: string;
-  updatedAt: string;
-  creator?: {
-    id: string;
-    name: string;
-    email: string;
-  };
-}
-
-interface RecordListResponse {
-  success: boolean;
-  data: FormRecord[];
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
-}
-
-interface ApiResponse<T> {
-  success: boolean;
-  data: T;
-}
+// Re-export type for components
+export type { FormRecord } from "@orion/shared";
 
 // Query Keys
 export const recordKeys = {
@@ -49,8 +21,8 @@ const fetchRecordsByForm = async (
   formId: string,
   page = 1,
   limit = 50
-): Promise<{ data: FormRecord[]; pagination: RecordListResponse["pagination"] }> => {
-  const { data } = await apiClient.get<RecordListResponse>(`/forms/${formId}/records`, { params: { page, limit } });
+): Promise<{ data: FormRecord[]; pagination: PaginatedResponse<FormRecord>["pagination"] }> => {
+  const { data } = await apiClient.get<PaginatedResponse<FormRecord>>(`/forms/${formId}/records`, { params: { page, limit } });
   return { data: data.data, pagination: data.pagination };
 };
 

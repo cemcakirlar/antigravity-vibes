@@ -17,8 +17,10 @@ import {
   AlignLeft,
   Database,
   Settings,
+  Wand2,
 } from "lucide-react";
 import { useForm, useCreateField, useDeleteField, type Field, type FieldType } from "../api/forms";
+import { toast } from "sonner";
 import { useCreateRecord, useUpdateRecord, type FormRecord } from "../api/records";
 import { RecordTable } from "../components/RecordTable";
 import { RecordForm } from "../components/RecordForm";
@@ -45,9 +47,15 @@ const FIELD_TYPES: { value: FieldType; label: string; icon: React.ReactNode }[] 
   { value: "file", label: "File", icon: <FileIcon className="h-4 w-4" /> },
 ];
 
+const DEFAULT_FIELDS = [
+  { name: "id", label: "ID", type: "text" as FieldType, required: true },
+  { name: "created_at", label: "Created At", type: "datetime" as FieldType, required: false },
+  { name: "updated_at", label: "Updated At", type: "datetime" as FieldType, required: false },
+];
+
 export function FormPage() {
-  const { id } = useParams();
-  const { data: form, isLoading } = useForm(id!);
+  const { formId } = useParams();
+  const { data: form, isLoading } = useForm(formId!);
   const createField = useCreateField();
   const deleteField = useDeleteField();
   const createRecord = useCreateRecord();
@@ -67,10 +75,10 @@ export function FormPage() {
 
   const handleCreateField = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newField.name.trim() || !newField.label.trim() || !id) return;
+    if (!newField.name.trim() || !newField.label.trim() || !formId) return;
 
     await createField.mutateAsync({
-      formId: id,
+      formId,
       ...newField,
     });
     setNewField({
@@ -101,8 +109,8 @@ export function FormPage() {
   const handleRecordSubmit = async (data: Record<string, unknown>) => {
     if (editingRecord) {
       await updateRecord.mutateAsync({ id: editingRecord.id, data });
-    } else if (id) {
-      await createRecord.mutateAsync({ formId: id, data });
+    } else if (formId) {
+      await createRecord.mutateAsync({ formId, data });
     }
     setShowRecordForm(false);
     setEditingRecord(null);
@@ -111,6 +119,26 @@ export function FormPage() {
   const getFieldIcon = (type: FieldType) => {
     const fieldType = FIELD_TYPES.find((f) => f.value === type);
     return fieldType?.icon || <Type className="h-4 w-4" />;
+  };
+
+  const handleAddDefaultFields = async () => {
+    if (!formId) return;
+    const existingNames = fields.map((f) => f.name);
+    const fieldsToAdd = DEFAULT_FIELDS.filter((f) => !existingNames.includes(f.name));
+
+    if (fieldsToAdd.length === 0) {
+      toast.info("All default fields already exist");
+      return;
+    }
+
+    try {
+      for (const field of fieldsToAdd) {
+        await createField.mutateAsync({ formId, ...field });
+      }
+      toast.success(`Added ${fieldsToAdd.length} default fields`);
+    } catch {
+      toast.error("Failed to add default fields");
+    }
   };
 
   if (isLoading) {
@@ -159,7 +187,7 @@ export function FormPage() {
               </CardContent>
             </Card>
           ) : (
-            <RecordTable formId={id!} fields={fields} onAddRecord={handleAddRecord} onEditRecord={handleEditRecord} />
+            <RecordTable formId={formId!} fields={fields} onAddRecord={handleAddRecord} onEditRecord={handleEditRecord} />
           )}
         </TabsContent>
 
@@ -167,10 +195,16 @@ export function FormPage() {
         <TabsContent value="fields">
           <div className="flex items-center justify-between mb-4">
             <p className="text-muted-foreground">Define the structure of your data</p>
-            <Button onClick={() => setShowCreateField(true)}>
-              <Plus className="h-4 w-4" />
-              Add Field
-            </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={handleAddDefaultFields} disabled={createField.isPending}>
+                <Wand2 className="h-4 w-4" />
+                Add Default Fields
+              </Button>
+              <Button onClick={() => setShowCreateField(true)}>
+                <Plus className="h-4 w-4" />
+                Add Field
+              </Button>
+            </div>
           </div>
 
           {fields.length === 0 ? (

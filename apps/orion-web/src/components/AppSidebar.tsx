@@ -59,8 +59,8 @@ function WorkspaceItem({
           <SidebarMenuSub>
             {apps.map((app) => (
               <SidebarMenuSubItem key={app.id}>
-                <Link to={`/apps/${app.id}`}>
-                  <SidebarMenuSubButton isActive={location.pathname === `/apps/${app.id}`}>
+                <Link to={`/workspaces/${workspace.id}/apps/${app.id}`}>
+                  <SidebarMenuSubButton isActive={location.pathname.includes(`/apps/${app.id}`)}>
                     <AppWindow className="h-4 w-4 shrink-0" />
                     <span className="truncate">{app.name}</span>
                   </SidebarMenuSubButton>
@@ -85,7 +85,7 @@ export function AppSidebar() {
   const location = useLocation();
   const params = useParams();
   const [expandedWorkspace, setExpandedWorkspace] = useState<string | null>(
-    params.id && location.pathname.startsWith("/workspaces/") ? params.id : null
+    params.workspaceId && location.pathname.startsWith("/workspaces/") ? params.workspaceId : null
   );
 
   const getInitials = (name: string) => {

@@ -1,145 +1,138 @@
-import { eq, and } from 'drizzle-orm'
-import { db, applications, type Application, type NewApplication } from '../../db'
-import { workspaceService } from '../workspace/workspace.service'
+import { eq, and } from "drizzle-orm";
+import { db, applications, type Application, type NewApplication } from "../../db";
+import { workspaceService } from "../workspace/workspace.service";
+import type { CreateApplicationInput, UpdateApplicationInput } from "@orion/shared";
 
 function generateSlug(name: string): string {
-    return name
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-|-$/g, '')
-}
-
-export interface CreateApplicationInput {
-    name: string
-    slug?: string
-    description?: string
-}
-
-export interface UpdateApplicationInput {
-    name?: string
-    description?: string
-    settings?: Record<string, unknown>
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
 }
 
 class ApplicationService {
-    /**
-     * Create a new application in a workspace
-     */
-    async create(workspaceId: string, userId: string, input: CreateApplicationInput): Promise<Application | null> {
-        // Check workspace access
-        const hasAccess = await workspaceService.hasAccess(workspaceId, userId)
-        if (!hasAccess) {
-            return null
-        }
-
-        const slug = input.slug || generateSlug(input.name)
-
-        const [application] = await db.insert(applications).values({
-            workspaceId,
-            name: input.name,
-            slug,
-            description: input.description,
-        }).returning()
-
-        return application
+  /**
+   * Create a new application in a workspace
+   */
+  async create(workspaceId: string, userId: string, input: CreateApplicationInput): Promise<Application | null> {
+    // Check workspace access
+    const hasAccess = await workspaceService.hasAccess(workspaceId, userId);
+    if (!hasAccess) {
+      return null;
     }
 
-    /**
-     * List all applications in a workspace
-     */
-    async listByWorkspace(workspaceId: string, userId: string): Promise<Application[]> {
-        // Check workspace access
-        const hasAccess = await workspaceService.hasAccess(workspaceId, userId)
-        if (!hasAccess) {
-            return []
-        }
+    const slug = input.slug || generateSlug(input.name);
 
-        return await db.query.applications.findMany({
-            where: eq(applications.workspaceId, workspaceId),
-            orderBy: (apps, { desc }) => [desc(apps.createdAt)],
-        })
+    const [application] = await db
+      .insert(applications)
+      .values({
+        workspaceId,
+        name: input.name,
+        slug,
+        description: input.description,
+      })
+      .returning();
+
+    return application;
+  }
+
+  /**
+   * List all applications in a workspace
+   */
+  async listByWorkspace(workspaceId: string, userId: string): Promise<Application[]> {
+    // Check workspace access
+    const hasAccess = await workspaceService.hasAccess(workspaceId, userId);
+    if (!hasAccess) {
+      return [];
     }
 
-    /**
-     * Get an application by ID
-     */
-    async getById(appId: string, userId: string): Promise<Application | null> {
-        const app = await db.query.applications.findFirst({
-            where: eq(applications.id, appId),
-            with: {
-                workspace: true,
-            },
-        })
+    return await db.query.applications.findMany({
+      where: eq(applications.workspaceId, workspaceId),
+      orderBy: (apps, { desc }) => [desc(apps.createdAt)],
+    });
+  }
 
-        if (!app) {
-            return null
-        }
+  /**
+   * Get an application by ID
+   */
+  async getById(appId: string, userId: string): Promise<Application | null> {
+    const app = await db.query.applications.findFirst({
+      where: eq(applications.id, appId),
+      with: {
+        workspace: true,
+      },
+    });
 
-        // Check workspace access
-        const hasAccess = await workspaceService.hasAccess(app.workspaceId, userId)
-        if (!hasAccess) {
-            return null
-        }
-
-        return app
+    if (!app) {
+      return null;
     }
 
-    /**
-     * Get an application with its forms
-     */
-    async getWithForms(appId: string, userId: string): Promise<(Application & { forms: unknown[] }) | null> {
-        const app = await db.query.applications.findFirst({
-            where: eq(applications.id, appId),
-            with: {
-                workspace: true,
-                forms: {
-                    orderBy: (forms, { asc }) => [asc(forms.sortOrder)],
-                },
-            },
-        })
-
-        if (!app) {
-            return null
-        }
-
-        // Check workspace access
-        const hasAccess = await workspaceService.hasAccess(app.workspaceId, userId)
-        if (!hasAccess) {
-            return null
-        }
-
-        return app
+    // Check workspace access
+    const hasAccess = await workspaceService.hasAccess(app.workspaceId, userId);
+    if (!hasAccess) {
+      return null;
     }
 
-    /**
-     * Update an application
-     */
-    async update(appId: string, userId: string, input: UpdateApplicationInput): Promise<Application | null> {
-        const app = await this.getById(appId, userId)
-        if (!app) {
-            return null
-        }
+    return app;
+  }
 
-        const [updated] = await db.update(applications)
-            .set({ ...input, updatedAt: new Date() })
-            .where(eq(applications.id, appId))
-            .returning()
+  /**
+   * Get an application with its forms
+   */
+  async getWithForms(appId: string, userId: string): Promise<(Application & { forms: unknown[] }) | null> {
+    const app = await db.query.applications.findFirst({
+      where: eq(applications.id, appId),
+      with: {
+        workspace: true,
+        forms: {
+          orderBy: (forms, { asc }) => [asc(forms.sortOrder)],
+        },
+      },
+    });
 
-        return updated
+    if (!app) {
+      return null;
     }
 
-    /**
-     * Delete an application
-     */
-    async delete(appId: string, userId: string): Promise<boolean> {
-        const app = await this.getById(appId, userId)
-        if (!app) {
-            return false
-        }
-
-        await db.delete(applications).where(eq(applications.id, appId))
-        return true
+    // Check workspace access
+    const hasAccess = await workspaceService.hasAccess(app.workspaceId, userId);
+    if (!hasAccess) {
+      return null;
     }
+
+    return app;
+  }
+
+  /**
+   * Update an application
+   */
+  async update(appId: string, userId: string, input: UpdateApplicationInput): Promise<Application | null> {
+    const app = await this.getById(appId, userId);
+    if (!app) {
+      return null;
+    }
+
+    const [updated] = await db
+      .update(applications)
+      .set({ ...input, updatedAt: new Date() })
+      .where(eq(applications.id, appId))
+      .returning();
+
+    return updated;
+  }
+
+  /**
+   * Delete an application
+   */
+  async delete(appId: string, userId: string): Promise<boolean> {
+    const app = await this.getById(appId, userId);
+    if (!app) {
+      return false;
+    }
+
+    await db.delete(applications).where(eq(applications.id, appId));
+    return true;
+  }
 }
 
-export const applicationService = new ApplicationService()
+export const applicationService = new ApplicationService();

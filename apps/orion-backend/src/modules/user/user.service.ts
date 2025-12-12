@@ -1,20 +1,11 @@
 import { eq, desc, sql } from "drizzle-orm";
 import { hash } from "@node-rs/argon2";
 import { db, users, type User } from "../../db";
-
-export interface UpdateUserInput {
-  name?: string;
-  email?: string;
-}
+import type { UpdateUserInput, Pagination } from "@orion/shared";
 
 export interface UserListResult {
   data: Omit<User, "passwordHash">[];
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
+  pagination: Pagination;
 }
 
 class UserService {

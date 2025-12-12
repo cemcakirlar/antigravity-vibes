@@ -1,68 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "./client";
 import { applicationKeys } from "./applications";
+import type { Form, FormWithFields, Field, FieldType, ApiResponse } from "@orion/shared";
 
-// Types
-export interface Form {
-  id: string;
-  applicationId: string;
-  name: string;
-  slug: string;
-  tableName: string;
-  description?: string;
-  layout: Record<string, unknown>;
-  settings: Record<string, unknown>;
-  sortOrder: number;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface FormWithFields extends Form {
-  fields: Field[];
-  application?: {
-    id: string;
-    name: string;
-    workspaceId: string;
-  };
-}
-
-export interface Field {
-  id: string;
-  formId: string;
-  name: string;
-  label: string;
-  type: FieldType;
-  required: boolean;
-  unique: boolean;
-  defaultValue?: string;
-  placeholder?: string;
-  helpText?: string;
-  validation: Record<string, unknown>;
-  options: Record<string, unknown>;
-  sortOrder: number;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export type FieldType =
-  | "text"
-  | "number"
-  | "email"
-  | "date"
-  | "datetime"
-  | "boolean"
-  | "select"
-  | "multiselect"
-  | "lookup"
-  | "file"
-  | "textarea"
-  | "url"
-  | "phone";
-
-interface ApiResponse<T> {
-  success: boolean;
-  data: T;
-}
+// Re-export types for components
+export type { Form, FormWithFields, Field, FieldType } from "@orion/shared";
 
 // Query Keys
 export const formKeys = {
