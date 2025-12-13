@@ -8,7 +8,8 @@
     "test": "pnpm -r run test",
     "lint": "pnpm -r run lint",
     "dev": "pnpm -r run dev",
-    "dev:orion": "pnpm -r run dev:orion"
+    "dev:orion": "pnpm -r run dev:orion",
+    "typecheck": "pnpm -r run typecheck"
   },
   "packageManager": "pnpm@10.24.0",
   "engines": {
