@@ -3,9 +3,11 @@ packages:
   - orion-apps/*
   - packages/*
   - kreator-apps/*
+  - kreator-packages/*
 
 onlyBuiltDependencies:
-  - "@prisma/client"
-  - "@prisma/engines"
+  - '@prisma/client'
+  - '@prisma/engines'
+  - better-sqlite3
   - esbuild
   - prisma

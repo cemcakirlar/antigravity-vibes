@@ -1,0 +1,37 @@
+{
+  "name": "@kreator/data",
+  "version": "0.0.1",
+  "description": "Database abstraction layer for Kreator platform",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "typeorm": "^0.3.20",
+    "reflect-metadata": "^0.2.2"
+  },
+  "peerDependencies": {
+    "pg": "^8.0.0",
+    "better-sqlite3": "^11.0.0",
+    "mssql": "^11.0.0"
+  },
+  "peerDependenciesMeta": {
+    "pg": {
+      "optional": true
+    },
+    "better-sqlite3": {
+      "optional": true
+    },
+    "mssql": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "@types/node": "^22.0.0"
+  }
+}

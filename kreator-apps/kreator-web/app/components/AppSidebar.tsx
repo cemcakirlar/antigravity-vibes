@@ -11,13 +11,14 @@ import {
   SidebarMenuItem,
   SidebarSeparator,
 } from "~/components/ui/sidebar";
-import { FolderKanban, Home, Settings } from "lucide-react";
+import { Database, FolderKanban, Home, Settings } from "lucide-react";
 import { Link, useLocation } from "react-router";
 
 const navItems = [
   { label: "Home", href: "/", icon: Home },
   { label: "Projects", href: "/projects", icon: FolderKanban },
   { label: "Settings", href: "/settings", icon: Settings },
+  { label: "DB Test", href: "/db-test", icon: Database },
 ];
 
 export function AppSidebar() {
