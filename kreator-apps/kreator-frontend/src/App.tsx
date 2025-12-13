@@ -1,8 +1,14 @@
+import { BrowserRouter } from "react-router";
+import { ThemeProvider } from "./contexts/ThemeProvider";
+import { AppRoutes } from "./routes";
+
 function App() {
   return (
-    <div className="flex flex-col items-center justify-center h-screen">
-      <h1>Antigravity</h1>
-    </div>
+    <BrowserRouter>
+      <ThemeProvider>
+        <AppRoutes />
+      </ThemeProvider>
+    </BrowserRouter>
   );
 }
 
